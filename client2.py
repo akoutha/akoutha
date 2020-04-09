@@ -14,15 +14,17 @@ def client():
         print('[C]: socket open error: {} \n'.format(err))
         exit()
 
-    if hostname == "local":
-        host_addr = socket.gethostbyname(socket.gethostname())
-        print "[C]: Using localhost"
-    else:
-        host_addr = socket.gethostbyname(hostname)
 
-    server_binding = (host_addr, 55555)
+    host_addr = socket.gethostbyname(socket.gethostname())
+    print "[C]: Using localhost"
+    server_binding = (host_addr, 44444)
     cs.connect(server_binding)
     query = sys.argv[1]
     cs.sendall(query)
     data_from_server = cs.recv(1024)  # Receive data from the server
     print("[C]: Data received: {}".format(data_from_server.decode('utf-8')))
+
+if __name__ == "__main__":
+    t2 = threading.Thread(name='client', target=client)
+    t2.start()
+    print("Done.")
