@@ -57,8 +57,24 @@ def client_t(connection, t):
 
         if data:
             print("[S]: Incoming data: " + data)
-            print("[S]: Outgoing data: " + data + "hello")
-            connection.sendall(data+"hello")
+            #print("[S]: Outgoing data: " + data + "hello")
+            try:
+                cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                print("[C]: Client socket created")
+            except socket.error as err:
+                print('[C]: socket open error: {} \n'.format(err))
+                exit()
+
+            host_addr = socket.gethostbyname(socket.gethostname())
+            print "[C]: Using localhost"
+            server_binding = (host_addr, 22222)
+            cs.connect(server_binding)
+            cs.sendall(data)
+            data_from_server = cs.recv(1024)  # Receive data from the server
+            print("[C]: Data received: {}".format(data_from_server.decode('utf-8')))
+
+
+            connection.sendall(data_from_server)
 
 # If there is a match, sends the entry as a string:
 # Hostname IPaddress A

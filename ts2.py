@@ -20,7 +20,8 @@ def ts():
         except socket.error as err:
             print('socket open error: {}\n'.format(err))
             exit()
-        port = int(sys.argv[1]) if len(sys.argv) > 1 else 50789
+        #port = int(sys.argv[1]) if len(sys.argv) > 1 else 50789
+        port = 77777
         server_binding = ('', port)
         ss.bind(server_binding)
         ss.listen(1)
@@ -80,7 +81,7 @@ def findIP(hostname, table):
 
 
 def populateDNSTable(table):
-    with open("PROJI-DNSTS.txt") as f:
+    with open("PROJ2-DNSTS2.txt") as f:
         for line in f:
             inner_list = [elt.strip() for elt in line.split(' ')]
             table.append(inner_list)
