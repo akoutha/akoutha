@@ -8,10 +8,9 @@ from threading import Thread
 import traceback
 
 
-def rs():
+def ls():
 
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 50788
-    port = 44444
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else 44444
 
     try:
         ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -19,6 +18,7 @@ def rs():
     except socket.error as err:
         print('socket open error: {}\n'.format(err))
         exit()
+
     server_binding = ('', port)
     ss.bind(server_binding)
     ss.listen(1)
@@ -44,10 +44,21 @@ def rs():
 
 
 def client_t(connection, t):
+
+    ts1Hn = sys.argv[2]
+    ts1Port = int(sys.argv[3]) if len(sys.argv) > 1 else 22222
+    ts2Hn = sys.argv[4]
+    ts2Port = int(sys.argv[5]) if len(sys.argv) > 1 else 33333
+
     active = True
     print("[S]: Spawned new client thread")
+
+    timeout1 = False
+    timeout2 = False;
+
+
     while active:
-        data = connection.recv(1024).strip()
+        data = connection.recv(1024).strip() #from client
         # print("[S]: data: " + data)
         if(data == ""):
             # print("data is empty")
@@ -58,31 +69,75 @@ def client_t(connection, t):
         if data:
             print("[S]: Incoming data: " + data)
             #print("[S]: Outgoing data: " + data + "hello")
-            try:
+
+            try: #create ts1 socket
                 cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 print("[C]: Client socket created")
             except socket.error as err:
                 print('[C]: socket open error: {} \n'.format(err))
                 exit()
 
-            host_addr = socket.gethostbyname(socket.gethostname())
-            print "[C]: Using localhost"
-            server_binding = (host_addr, 22222)
+            if ts1Hn == "local":
+                host_addr = socket.gethostbyname(socket.gethostname())
+            else:
+                host_addr = socket.gethostbyname(ts1Hn)
+            #print "[C]: Using localhost"
+            server_binding = (host_addr, ts1Port)
             cs.connect(server_binding)
             cs.sendall(data)
-            data_from_server = cs.recv(1024)  # Receive data from the server
-            print("[C]: Data received: {}".format(data_from_server.decode('utf-8')))
+            cs.settimeout(5.0)
+            data_from_server_ts1=""
+
+            try:
+                data_from_server_ts1 = cs.recv(1024)  # Receive data from the server
+                timeout1 = False
+                print "recieved from ts1 " + data_from_server_ts1
+                #connection.sendall(data_from_server_ts1)
+            except socket.timeout as e:
+                print "time out error occured! - ts1"
+                timeout1 = True
+                #connection.sendall("timeout occured")
 
 
-            connection.sendall(data_from_server)
 
-# If there is a match, sends the entry as a string:
-# Hostname IPaddress A
-# If there is no match, RS sends the string:
-# TSHostname - NS
+            try:
+                cs2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            except socket.error as err:
+                exit()
+
+            if ts2Hn == "local":
+                host_addr2 = socket.gethostbyname(socket.gethostname())
+            else:
+                host_addr2 = socket.gethostbyname(ts2Hn)
+
+            server_binding2 = (host_addr2,ts2Port)
+            cs2.connect(server_binding2)
+            cs2.sendall(data)
+            cs2.settimeout(5.0)
+            data_from_server_ts2=""
+
+            try:
+                data_from_server_ts2 = cs2.recv(1024)
+                timeout2 = False
+                print "recieved from ts2 "+data_from_server_ts2
+            except socket.timeout as e:
+                print "timeout ts2"
+                timeout2 = True
+
+
+            if timeout2 and timeout1:
+                connection.sendall(data + " - ERROR: HOST NOT FOUND")
+            elif timeout2:
+                print "sending " + data_from_server_ts1
+                connection.sendall(data_from_server_ts1)
+            else:
+                print "sending "+data_from_server_ts2
+                connection.sendall(data_from_server_ts2)
+
+
 
 
 
 if __name__ == "__main__":
-    t1 = threading.Thread(name='rs', target=rs)
+    t1 = threading.Thread(name='ls', target=ls)
     t1.start()

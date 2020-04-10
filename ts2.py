@@ -20,8 +20,8 @@ def ts():
         except socket.error as err:
             print('socket open error: {}\n'.format(err))
             exit()
-        #port = int(sys.argv[1]) if len(sys.argv) > 1 else 50789
-        port = 77777
+        port = int(sys.argv[1]) if len(sys.argv) > 1 else 33333
+        #port = 33333
         server_binding = ('', port)
         ss.bind(server_binding)
         ss.listen(1)
@@ -57,7 +57,12 @@ def client_t(connection, table):
             print("[S]: Incoming data: " + data)
             result = findIP(data, table)
             print("[S]: Outgoing data: " + result)
-            connection.sendall(result)
+
+            if result:
+                print "data sent!"
+                connection.sendall(result)
+            else:
+                continue
 
 # If there is a match, sends the entry as a string:
 # Hostname IPaddress A
@@ -69,14 +74,14 @@ def findIP(hostname, table):
     for row in table:
         for item in row:
             if item.lower() == "NS".lower():
-                ns = row[0]+" " + row[1] + " " + row[2]
+                ns = row[0]+" " + row[1]+" "+row[2]
             if hostname.lower() == item.lower():
                 found = True
-                entry = row[0]+" " + row[1] + " " + row[2]
+                entry = row[0]+" " + row[1]+" "+row[2]
                 return entry
     # Not found. return ns record
-    if not found:
-        return "NS"
+    #if not found:
+        #return "NS"
     return ns
 
 
